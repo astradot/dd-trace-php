@@ -11,7 +11,17 @@ extern inline void ddtrace_log_err(const char *message);
 
 atomic_uintptr_t php_ini_error_log;
 
-void ddtrace_bgs_log_minit(void) { atomic_store(&php_ini_error_log, (uintptr_t)NULL); }
+void ddtrace_bgs_log_minit(void) {
+    atomic_store(&php_ini_error_log, (uintptr_t)NULL);
+
+    // DO NOT MERGE: workaround for debug purposes to have the BGS to always work even before first RINIT
+    uintptr_t desired = (uintptr_t)ddtrace_strdup("error.log");
+    uintptr_t expected = (uintptr_t)NULL;
+    if (!atomic_compare_exchange_strong(&php_ini_error_log, &expected, desired)) {
+        // if it didn't exchange, then we need to free our duplicated string
+        free((char *)desired);
+    }
+}
 
 void ddtrace_bgs_log_rinit(char *error_log) {
     if (!error_log || strcasecmp(error_log, "syslog") == 0 || strlen(error_log) == 0) {
@@ -57,9 +67,9 @@ int ddtrace_bgs_logf(const char *fmt, ...) {
             // todo: we only need 20-ish for the main part, but how much for the timezone?
             // Wish PHP printed -hhmm or +hhmm instead of the name
             char timebuf[64];
-            int time_len = strftime(timebuf, sizeof timebuf, "%d-%m-%Y %H:%m:%S %Z", now_local);
+            int time_len = strftime(timebuf, sizeof timebuf, "%d-%b-%Y %H:%M:%S %Z", now_local);
             if (time_len > 0) {
-                ret = fprintf(fh, "[%s] %s\n", timebuf, msgbuf);
+                ret = fprintf(fh, "[%s] - %d - %s \n", timebuf, getpid(), msgbuf);
             }
 
             free(msgbuf);

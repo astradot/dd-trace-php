@@ -937,6 +937,7 @@ static struct _writer_thread_variables_t *_dd_create_thread_variables() {
 }
 
 bool ddtrace_coms_init_and_start_writer(void) {
+    ddtrace_bgs_logf("BGS: ddtrace_coms_init_and_start_writer().", 1);
     struct _writer_loop_data_t *writer = _dd_get_writer();
     _dd_writer_set_operational_state(writer);
     atomic_store(&writer->current_pid, getpid());
@@ -988,16 +989,19 @@ bool ddtrace_coms_on_pid_change(void) {
 
 bool ddtrace_coms_trigger_writer_flush(void) {
     struct _writer_loop_data_t *writer = _dd_get_writer();
+    ddtrace_bgs_logf("Start ddtrace_coms_trigger_writer_flush().", 1);
     if (writer->thread) {
         pthread_mutex_lock(&writer->thread->interval_flush_mutex);
         pthread_cond_signal(&writer->thread->interval_flush_condition);
         pthread_mutex_unlock(&writer->thread->interval_flush_mutex);
     }
 
+    ddtrace_bgs_logf("End ddtrace_coms_trigger_writer_flush().", 1);
     return true;
 }
 
 void ddtrace_coms_rshutdown(void) {
+    ddtrace_bgs_logf("Start ddtrace_coms_rshutdown().", 1);
     struct _writer_loop_data_t *writer = _dd_get_writer();
 
     atomic_fetch_add(&writer->request_counter, 1);
@@ -1010,12 +1014,15 @@ void ddtrace_coms_rshutdown(void) {
 
     // simple heuristic to flush every n request to improve memory used
     if (requests_since_last_flush > get_dd_trace_agent_flush_after_n_requests()) {
+        ddtrace_bgs_logf("About to invoke ddtrace_coms_trigger_writer_flush().", 1);
         ddtrace_coms_trigger_writer_flush();
     }
+    ddtrace_bgs_logf("End ddtrace_coms_rshutdown().", 1);
 }
 
 // Returns true if writer is shutdown completely
 bool ddtrace_coms_flush_shutdown_writer_synchronous(void) {
+    ddtrace_bgs_logf("Start ddtrace_coms_flush_shutdown_writer_synchronous", 1);
     struct _writer_loop_data_t *writer = _dd_get_writer();
     if (!writer->thread) {
         return true;
@@ -1048,8 +1055,10 @@ bool ddtrace_coms_flush_shutdown_writer_synchronous(void) {
         pthread_join(writer->thread->self, NULL);
         free(writer->thread);
         writer->thread = NULL;
+        ddtrace_bgs_logf("End -1 ddtrace_coms_flush_shutdown_writer_synchronous", 1);
         return true;
     }
+    ddtrace_bgs_logf("End ddtrace_coms_flush_shutdown_writer_synchronous", 1);
     return false;
 }
 

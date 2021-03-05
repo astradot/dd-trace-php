@@ -5,6 +5,8 @@
 #include "configuration.h"
 
 inline void ddtrace_log_err(const char *message) {
+    // The invocation of this function should be shielded behind a prelimary check to decide if we have to log or not,
+    // as TSRMLS_FETCH() requires relevant processing time.
     TSRMLS_FETCH();
     php_log_err((char *)message TSRMLS_CC);
 }

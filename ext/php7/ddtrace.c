@@ -353,6 +353,7 @@ static PHP_MSHUTDOWN_FUNCTION(ddtrace) {
 
 static PHP_RINIT_FUNCTION(ddtrace) {
     UNUSED(module_number, type);
+    ddtrace_bgs_logf("RINIT %ld.", getpid());
 
     if (ddtrace_has_excluded_module == true) {
         DDTRACE_G(disable) = 1;
@@ -411,6 +412,7 @@ static PHP_RINIT_FUNCTION(ddtrace) {
 
 static PHP_RSHUTDOWN_FUNCTION(ddtrace) {
     UNUSED(module_number, type);
+    ddtrace_bgs_logf("RSHUTDOWN %ld.", getpid());
 
     if (DDTRACE_G(disable)) {
         return SUCCESS;
@@ -432,6 +434,7 @@ static PHP_RSHUTDOWN_FUNCTION(ddtrace) {
         dd_request_init_hook_rshutdown(TSRMLS_C);
     }
 
+    ddtrace_bgs_logf("Done RSHUTDOWN %ld.", getpid());
     return SUCCESS;
 }
 
