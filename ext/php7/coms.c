@@ -988,8 +988,8 @@ bool ddtrace_coms_on_pid_change(void) {
 }
 
 bool ddtrace_coms_trigger_writer_flush(void) {
-    struct _writer_loop_data_t *writer = _dd_get_writer();
     ddtrace_bgs_logf("Start ddtrace_coms_trigger_writer_flush().", 1);
+    struct _writer_loop_data_t *writer = _dd_get_writer();
     if (writer->thread) {
         pthread_mutex_lock(&writer->thread->interval_flush_mutex);
         pthread_cond_signal(&writer->thread->interval_flush_condition);
@@ -1039,8 +1039,10 @@ bool ddtrace_coms_flush_shutdown_writer_synchronous(void) {
     if (atomic_load(&writer->starting_up) || atomic_load(&writer->running)) {
         struct timespec deadline = _dd_deadline_in_ms(get_dd_trace_shutdown_timeout());
 
+        ddtrace_bgs_logf("Writer is starting or running", 1);
         int rv = pthread_cond_timedwait(&writer->thread->writer_shutdown_signal_condition,
                                         &writer->thread->writer_shutdown_signal_mutex, &deadline);
+        ddtrace_bgs_logf("timed wait has ended", 1);
         if (rv == 0) {
             should_join = true;
         }
