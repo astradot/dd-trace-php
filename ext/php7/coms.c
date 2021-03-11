@@ -838,6 +838,7 @@ static void *_dd_writer_loop(void *_) {
     bool running = true;
     _dd_signal_writer_started(writer);
     do {
+        ddtrace_bgs_logf("Do loop in _dd_writer_loop()", 1);
         atomic_fetch_add(&writer->writer_cycle, 1);
         uint32_t interval = atomic_load(&writer->flush_interval);
         // fprintf(stderr, "interval %lu\n", interval);
@@ -1039,7 +1040,7 @@ bool ddtrace_coms_flush_shutdown_writer_synchronous(void) {
     if (atomic_load(&writer->starting_up) || atomic_load(&writer->running)) {
         struct timespec deadline = _dd_deadline_in_ms(get_dd_trace_shutdown_timeout());
 
-        ddtrace_bgs_logf("Writer is starting or running", 1);
+        ddtrace_bgs_logf("Writer is starting or running.", 1);
         int rv = pthread_cond_timedwait(&writer->thread->writer_shutdown_signal_condition,
                                         &writer->thread->writer_shutdown_signal_mutex, &deadline);
         ddtrace_bgs_logf("timed wait has ended", 1);
