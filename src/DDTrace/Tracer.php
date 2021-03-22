@@ -353,46 +353,50 @@ final class Tracer implements TracerInterface
      */
     public function getTracesAsArray()
     {
+        error_log('AAA_BBB: ' . print_r(\dd_ignore_userland_spans(), 1));
         $tracesToBeSent = [];
         $autoFinishSpans = \ddtrace_config_autofinish_span_enabled();
         $serviceMappings = \ddtrace_config_service_mapping();
 
-        $root = $this->getSafeRootSpan();
-        if ($root) {
-            $meta = \DDTrace\additional_trace_meta();
-            foreach ($meta as $tag => $value) {
-                $root->setTag($tag, $value, true);
-            }
-        }
-
-        foreach ($this->traces as $trace) {
-            $traceToBeSent = [];
-            foreach ($trace as $span) {
-                // If resource is empty, we normalize it the the operation name.
-                if ($span->getResource() === null) {
-                    $span->setResource($span->getOperationName());
+        if (!dd_ignore_userland_spans()) {
+            $root = $this->getSafeRootSpan();
+            if ($root) {
+                $meta = \DDTrace\additional_trace_meta();
+                foreach ($meta as $tag => $value) {
+                    $root->setTag($tag, $value, true);
                 }
+            }
 
-                if ($span->duration === null) { // is span not finished
-                    if (!$autoFinishSpans) {
-                        $traceToBeSent = null;
-                        break;
+            foreach ($this->traces as $trace) {
+                $traceToBeSent = [];
+                foreach ($trace as $span) {
+                    // If resource is empty, we normalize it the the operation name.
+                    if ($span->getResource() === null) {
+                        $span->setResource($span->getOperationName());
                     }
-                    $span->duration = (Time::now()) - $span->startTime; // finish span
+
+                    if ($span->duration === null) { // is span not finished
+                        if (!$autoFinishSpans) {
+                            $traceToBeSent = null;
+                            break;
+                        }
+                        $span->duration = (Time::now()) - $span->startTime; // finish span
+                    }
+                    $encodedSpan = SpanEncoder::encode($span);
+                    $traceToBeSent[] = $encodedSpan;
                 }
-                $encodedSpan = SpanEncoder::encode($span);
-                $traceToBeSent[] = $encodedSpan;
-            }
 
-            if ($traceToBeSent === null) {
-                continue;
-            }
+                if ($traceToBeSent === null) {
+                    continue;
+                }
 
-            $tracesToBeSent[] = $traceToBeSent;
-            if (isset($traceToBeSent[0]['trace_id'])) {
-                unset($this->traces[(string) $traceToBeSent[0]['trace_id']]);
+                $tracesToBeSent[] = $traceToBeSent;
+                if (isset($traceToBeSent[0]['trace_id'])) {
+                    unset($this->traces[(string) $traceToBeSent[0]['trace_id']]);
+                }
             }
         }
+
 
         $internalSpans = dd_trace_serialize_closed_spans();
 

@@ -142,6 +142,39 @@ void ddtrace_drop_top_open_span(TSRMLS_D) {
     ddtrace_drop_span(span_fci);
 }
 
+void ddtrace_init_internal_distributed_trace(TSRMLS_D) {
+    // The tracer supports only one trace per request so free any remaining open spans
+    _free_span_stack(DDTRACE_G(open_spans_top));
+    DDTRACE_G(open_spans_top) = NULL;
+    DDTRACE_G(open_spans_count) = 0;
+
+    // Clear out additional trace meta; re-initialize it to empty
+    zval_dtor(&DDTRACE_G(additional_trace_meta));
+    array_init_size(&DDTRACE_G(additional_trace_meta), ddtrace_num_error_tags);
+
+    ddtrace_span_fci *span_fci = DDTRACE_G(closed_spans_top);
+    while (span_fci != NULL) {
+        ddtrace_span_fci *tmp = span_fci;
+        span_fci = tmp->next;
+        _free_span(tmp);
+        DDTRACE_G(closed_spans_top) = span_fci;
+    }
+
+    DDTRACE_G(closed_spans_top) = NULL;
+    DDTRACE_G(closed_spans_count) = 0;
+
+    uint64_t old_trace_id = DDTRACE_G(trace_id);
+    // Reset the span ID stack and trace ID
+    ddtrace_free_span_id_stack(TSRMLS_C);
+    // Preserving trace_id as in a virtual distributed trace
+    DDTRACE_G(trace_id) = old_trace_id;
+
+    // We need to reseed the random span id generator to support pcntl_fork() for duplicating ids.
+    ddtrace_seed_prng(TSRMLS_C);
+
+    DDTRACE_G(ignore_userland_spans) = 1;
+}
+
 void ddtrace_serialize_closed_spans(zval *serialized TSRMLS_DC) {
     // The tracer supports only one trace per request so free any remaining open spans
     _free_span_stack(DDTRACE_G(open_spans_top));

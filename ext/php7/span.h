@@ -44,6 +44,7 @@ void ddtrace_open_span(ddtrace_span_fci *span_fci TSRMLS_DC);
 void dd_trace_stop_span_time(ddtrace_span_t *span);
 void ddtrace_close_span(TSRMLS_D);
 void ddtrace_drop_top_open_span(TSRMLS_D);
+void ddtrace_init_internal_distributed_trace(TSRMLS_D);
 void ddtrace_serialize_closed_spans(zval *serialized TSRMLS_DC);
 
 // Prefer ddtrace_drop_top_open_span

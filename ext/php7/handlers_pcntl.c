@@ -15,6 +15,7 @@ bool dd_ext_pcntl_loaded = false;
 static void (*dd_pcntl_fork_handler)(INTERNAL_FUNCTION_PARAMETERS) = NULL;
 
 ZEND_FUNCTION(ddtrace_pcntl_fork) {
+    // Since PID has changed, we need to reset PID based communication on the background sender
     pid_t caller_pid_before_fork = getpid();
     dd_pcntl_fork_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU);
     pid_t caller_pid_after_fork = getpid();
@@ -22,6 +23,7 @@ ZEND_FUNCTION(ddtrace_pcntl_fork) {
         // we are in forked process
         ddtrace_bgs_logf("pcntl_fork after wrapper", "");
         ddtrace_coms_on_pid_change();
+        ddtrace_init_internal_distributed_trace(TSRMLS_C);
     }
 }
 

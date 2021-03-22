@@ -387,6 +387,7 @@ static PHP_RINIT_FUNCTION(ddtrace) {
     ddtrace_bgs_log_rinit(PG(error_log));
     ddtrace_dispatch_init(TSRMLS_C);
     DDTRACE_G(disable_in_current_request) = 0;
+    DDTRACE_G(ignore_userland_spans) = 0;
 
     // This allows us to hook the ZEND_HANDLE_EXCEPTION pseudo opcode
     ZEND_VM_SET_OPCODE_HANDLER(EG(exception_op));
@@ -671,6 +672,11 @@ static PHP_FUNCTION(trace_method) {
 
     zend_bool rv = ddtrace_trace(class_name, function, tracing_closure, options TSRMLS_CC);
     RETURN_BOOL(rv);
+}
+
+static PHP_FUNCTION(dd_ignore_userland_spans) {
+    UNUSED(execute_data);
+    RETURN_BOOL(DDTRACE_G(ignore_userland_spans));
 }
 
 /*
@@ -1345,6 +1351,7 @@ static const zend_function_entry ddtrace_functions[] = {
     DDTRACE_NS_FE(trace_id, arginfo_ddtrace_void),
     DDTRACE_FE(dd_trace_push_span_id, arginfo_dd_trace_push_span_id),
     DDTRACE_FE(dd_trace_reset, arginfo_ddtrace_void),
+    DDTRACE_FE(dd_ignore_userland_spans, arginfo_ddtrace_void),
     DDTRACE_FE(dd_trace_send_traces_via_thread, arginfo_dd_trace_send_traces_via_thread),
     DDTRACE_FE(dd_trace_serialize_closed_spans, arginfo_ddtrace_void),
     DDTRACE_FE(dd_trace_serialize_msgpack, arginfo_dd_trace_serialize_msgpack),
