@@ -114,6 +114,7 @@ static void (*_dd_ptr_at_exit_callback)(void) = 0;
 static void _dd_at_exit_callback() { ddtrace_coms_flush_shutdown_writer_synchronous(); }
 
 static void _dd_at_exit_hook() {
+    ddtrace_bgs_logf("At exit", "");
     if (_dd_ptr_at_exit_callback) {
         _dd_ptr_at_exit_callback();
     }
@@ -819,6 +820,9 @@ static void _dd_signal_data_processed(struct _writer_loop_data_t *writer) {
 
 static void *_dd_writer_loop(void *_) {
     UNUSED(_);
+
+    ddtrace_bgs_logf("In writer loop %d.", 1);
+
     /* This thread must not handle signals intended for the PHP threads.
      * See Zend/zend_signal.c for which signals it registers.
      */
