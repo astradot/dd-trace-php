@@ -231,6 +231,7 @@ enum ddtrace_sidecar_connection_mode {
     CONFIG(STRING, DD_TRACE_AGENT_TEST_SESSION_TOKEN, "", .ini_change = ddtrace_alter_test_session_token)      \
     CONFIG(BOOL, DD_TRACE_PROPAGATE_USER_ID_DEFAULT, "false")                                                  \
     CONFIG(CUSTOM(INT), DD_DBM_PROPAGATION_MODE, "disabled", .parser = dd_parse_dbm_mode)                      \
+    CONFIG(BOOL, DD_DBM_INJECT_SQL_BASEHASH, "false")                                                          \
     CONFIG(CUSTOM(INT), DD_TRACE_SIDECAR_CONNECTION_MODE, "auto", .parser = dd_parse_sidecar_connection_mode) \
     CONFIG(SET, DD_TRACE_WORDPRESS_ADDITIONAL_ACTIONS, "")                                                     \
     CONFIG(BOOL, DD_TRACE_WORDPRESS_CALLBACKS, "true")                                                         \
